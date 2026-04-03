@@ -18,11 +18,14 @@ workflows:
       - name: Configure Android signing
         script: |
           cp "$CM_BUILD_DIR/demo_flutter_app/signing_export/genesis-upload-keystore.jks" "$CM_BUILD_DIR/demo_flutter_app/android/upload-keystore.jks"
-          keytool -list -keystore "$CM_BUILD_DIR/demo_flutter_app/android/upload-keystore.jks" -storepass "$CM_KEYSTORE_PASSWORD" -alias "$CM_KEY_ALIAS"
+          STORE_PASS="${CM_KEYSTORE_PASSWORD:-Kwabena2026}"
+          KEY_PASS="${CM_KEY_PASSWORD:-$STORE_PASS}"
+          KEY_ALIAS_NAME="${CM_KEY_ALIAS:-upload}"
+          keytool -list -keystore "$CM_BUILD_DIR/demo_flutter_app/android/upload-keystore.jks" -storepass "$STORE_PASS" -alias "$KEY_ALIAS_NAME"
           cat > "$CM_BUILD_DIR/demo_flutter_app/android/key.properties" <<EOF
-          storePassword=$CM_KEYSTORE_PASSWORD
-          keyPassword=$CM_KEY_PASSWORD
-          keyAlias=$CM_KEY_ALIAS
+          storePassword=$STORE_PASS
+          keyPassword=$KEY_PASS
+          keyAlias=$KEY_ALIAS_NAME
           storeFile=../upload-keystore.jks
           EOF
 
@@ -72,11 +75,14 @@ workflows:
       - name: Configure Android signing
         script: |
           cp "$CM_BUILD_DIR/demo_flutter_app/signing_export/genesis-upload-keystore.jks" "$CM_BUILD_DIR/demo_flutter_app/android/upload-keystore.jks"
-          keytool -list -keystore "$CM_BUILD_DIR/demo_flutter_app/android/upload-keystore.jks" -storepass "$CM_KEYSTORE_PASSWORD" -alias "$CM_KEY_ALIAS"
+          STORE_PASS="${CM_KEYSTORE_PASSWORD:-Kwabena2026}"
+          KEY_PASS="${CM_KEY_PASSWORD:-$STORE_PASS}"
+          KEY_ALIAS_NAME="${CM_KEY_ALIAS:-upload}"
+          keytool -list -keystore "$CM_BUILD_DIR/demo_flutter_app/android/upload-keystore.jks" -storepass "$STORE_PASS" -alias "$KEY_ALIAS_NAME"
           cat > "$CM_BUILD_DIR/demo_flutter_app/android/key.properties" <<EOF
-          storePassword=$CM_KEYSTORE_PASSWORD
-          keyPassword=$CM_KEY_PASSWORD
-          keyAlias=$CM_KEY_ALIAS
+          storePassword=$STORE_PASS
+          keyPassword=$KEY_PASS
+          keyAlias=$KEY_ALIAS_NAME
           storeFile=../upload-keystore.jks
           EOF
 

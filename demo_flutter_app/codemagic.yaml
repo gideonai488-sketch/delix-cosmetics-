@@ -22,13 +22,12 @@ workflows:
 
       - name: Configure Android signing
         script: |
-          printf '%s' "$CM_KEYSTORE_BASE64" | base64 --decode > "$CM_BUILD_DIR/demo_flutter_app/android/upload-keystore.jks"
           keytool -list -keystore "$CM_BUILD_DIR/demo_flutter_app/android/upload-keystore.jks" -storepass "$CM_KEYSTORE_PASSWORD" -alias "$CM_KEY_ALIAS"
           cat > "$CM_BUILD_DIR/demo_flutter_app/android/key.properties" <<EOF
           storePassword=$CM_KEYSTORE_PASSWORD
           keyPassword=$CM_KEY_PASSWORD
           keyAlias=$CM_KEY_ALIAS
-          storeFile=../upload-keystore.jks
+          storeFile=upload-keystore.jks
           EOF
 
       - name: Run static analysis

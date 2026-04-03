@@ -12,10 +12,6 @@ workflows:
       vars:
         PACKAGE_NAME: "com.delix.cosmetics"
 
-    triggering:
-      events:
-        - manual
-
     scripts:
       - name: Install dependencies
         script: flutter pub get

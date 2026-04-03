@@ -17,6 +17,7 @@ workflows:
 
       - name: Configure Android signing
         script: |
+          cp "$CM_BUILD_DIR/demo_flutter_app/signing_export/genesis-upload-keystore.jks" "$CM_BUILD_DIR/demo_flutter_app/android/upload-keystore.jks"
           keytool -list -keystore "$CM_BUILD_DIR/demo_flutter_app/android/upload-keystore.jks" -storepass "$CM_KEYSTORE_PASSWORD" -alias "$CM_KEY_ALIAS"
           cat > "$CM_BUILD_DIR/demo_flutter_app/android/key.properties" <<EOF
           storePassword=$CM_KEYSTORE_PASSWORD
@@ -70,6 +71,7 @@ workflows:
 
       - name: Configure Android signing
         script: |
+          cp "$CM_BUILD_DIR/demo_flutter_app/signing_export/genesis-upload-keystore.jks" "$CM_BUILD_DIR/demo_flutter_app/android/upload-keystore.jks"
           keytool -list -keystore "$CM_BUILD_DIR/demo_flutter_app/android/upload-keystore.jks" -storepass "$CM_KEYSTORE_PASSWORD" -alias "$CM_KEY_ALIAS"
           cat > "$CM_BUILD_DIR/demo_flutter_app/android/key.properties" <<EOF
           storePassword=$CM_KEYSTORE_PASSWORD

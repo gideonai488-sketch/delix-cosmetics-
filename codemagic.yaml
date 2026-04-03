@@ -53,3 +53,52 @@ workflows:
         notify:
           success: true
           failure: true
+
+  android_preview:
+    name: Android Preview APK (Auto)
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+
+    environment:
+      flutter: stable
+      groups:
+        - app_secrets
+        - android_signing
+      vars:
+        PACKAGE_NAME: "com.delix.cosmetics"
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
+
+    scripts:
+      - name: Install dependencies
+        script: |
+          cd demo_flutter_app
+          flutter pub get
+
+      - name: Configure Android signing
+        script: |
+          keytool -list -keystore "$CM_BUILD_DIR/demo_flutter_app/android/upload-keystore.jks" -storepass "$CM_KEYSTORE_PASSWORD" -alias "$CM_KEY_ALIAS"
+          cat > "$CM_BUILD_DIR/demo_flutter_app/android/key.properties" <<EOF
+          storePassword=$CM_KEYSTORE_PASSWORD
+          keyPassword=$CM_KEY_PASSWORD
+          keyAlias=$CM_KEY_ALIAS
+          storeFile=upload-keystore.jks
+          EOF
+
+      - name: Build Android APK (Preview)
+        script: |
+          cd demo_flutter_app
+          flutter build apk --release \
+            --dart-define=SUPABASE_URL=$SUPABASE_URL \
+            --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
+            --dart-define=APP_API_BASE_URL=$APP_API_BASE_URL \
+            --dart-define=PAYSTACK_PUBLIC_KEY=$PAYSTACK_PUBLIC_KEY
+
+    artifacts:
+      - demo_flutter_app/build/app/outputs/flutter-apk/app-release.apk

@@ -35,7 +35,7 @@ workflows:
       - name: Build Android App Bundle
         script: |
           cd demo_flutter_app
-          flutter build appbundle --release
+          flutter build appbundle --release --dart-define-from-file=codemagic_defines.json
 
     artifacts:
       - demo_flutter_app/build/**/outputs/**/*.aab
@@ -88,7 +88,7 @@ workflows:
       - name: Build Android APK (Preview)
         script: |
           cd demo_flutter_app
-          flutter build apk --release
+          flutter build apk --release --dart-define-from-file=codemagic_defines.json
 
     artifacts:
       - demo_flutter_app/build/app/outputs/flutter-apk/app-release.apk

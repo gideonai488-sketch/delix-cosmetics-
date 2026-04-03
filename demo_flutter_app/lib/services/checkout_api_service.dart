@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:http/http.dart' as http;
 
@@ -83,11 +84,18 @@ class CheckoutApiService {
       headers['Authorization'] = 'Bearer $token';
     }
 
-    final response = await http.post(
-      url,
-      headers: headers,
-      body: jsonEncode(body),
-    );
+    http.Response response;
+    try {
+      response = await http
+          .post(
+            url,
+            headers: headers,
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 20));
+    } on TimeoutException {
+      throw StateError('Request timed out. Please check your connection and try again.');
+    }
 
     final decoded = _decodeJson(response.body);
     if (response.statusCode < 200 || response.statusCode >= 300) {

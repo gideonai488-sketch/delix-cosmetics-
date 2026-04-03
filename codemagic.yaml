@@ -42,7 +42,7 @@ workflows:
           flutter build appbundle --release --dart-define-from-file=codemagic_defines.json
 
     artifacts:
-      - demo_flutter_app/build/**/outputs/**/*.aab
+      - demo_flutter_app/build/app/outputs/bundle/release/app-release.aab
       - demo_flutter_app/build/**/outputs/**/mapping.txt
 
     publishing:

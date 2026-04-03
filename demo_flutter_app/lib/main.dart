@@ -18,13 +18,21 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (AppConfig.hasSupabaseConfig) {
-    await Supabase.initialize(
-      url: AppConfig.supabaseUrl,
-      anonKey: AppConfig.supabaseAnonKey,
-    );
+    try {
+      await Supabase.initialize(
+        url: AppConfig.supabaseUrl,
+        anonKey: AppConfig.supabaseAnonKey,
+      );
+    } catch (error) {
+      debugPrint('Supabase initialization failed: $error');
+    }
   }
 
-  await NotificationService.initialize();
+  try {
+    await NotificationService.initialize();
+  } catch (error) {
+    debugPrint('Notification initialization failed: $error');
+  }
   runApp(
     MultiProvider(
       providers: [
@@ -85,15 +93,69 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      bottomNavigationBar: AppBottomNavBar(
-        currentIndex: _currentIndex,
-        onTabChanged: (index) => setState(() => _currentIndex = index),
-      ),
+    final body = IndexedStack(
+      index: _currentIndex,
+      children: _screens,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 900;
+
+        if (!isWide) {
+          return Scaffold(
+            body: body,
+            bottomNavigationBar: AppBottomNavBar(
+              currentIndex: _currentIndex,
+              onTabChanged: (index) => setState(() => _currentIndex = index),
+            ),
+          );
+        }
+
+        return Scaffold(
+          body: SafeArea(
+            child: Row(
+              children: [
+                NavigationRail(
+                  selectedIndex: _currentIndex,
+                  onDestinationSelected: (index) =>
+                      setState(() => _currentIndex = index),
+                  labelType: NavigationRailLabelType.all,
+                  destinations: const [
+                    NavigationRailDestination(
+                      icon: Icon(Icons.home_outlined),
+                      selectedIcon: Icon(Icons.home),
+                      label: Text('Home'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.spa_outlined),
+                      selectedIcon: Icon(Icons.spa),
+                      label: Text('Routine'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.shopping_bag_outlined),
+                      selectedIcon: Icon(Icons.shopping_bag),
+                      label: Text('Cart'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.receipt_long_outlined),
+                      selectedIcon: Icon(Icons.receipt_long),
+                      label: Text('Orders'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.person_outline),
+                      selectedIcon: Icon(Icons.person),
+                      label: Text('Profile'),
+                    ),
+                  ],
+                ),
+                const VerticalDivider(width: 1),
+                Expanded(child: body),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

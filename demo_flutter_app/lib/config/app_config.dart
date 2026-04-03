@@ -21,21 +21,11 @@ class AppConfig {
     defaultValue: '',
   );
 
-  static const String openAiApiKey = String.fromEnvironment(
-    'OPENAI_API_KEY',
-    defaultValue: '',
-  );
-
-  static const String openAiModel = String.fromEnvironment(
-    'OPENAI_MODEL',
-    defaultValue: 'gpt-4o-mini',
-  );
-
   static bool get hasApiBaseUrl => apiBaseUrl.trim().isNotEmpty;
   static bool get hasPaystackPublicKey => paystackPublicKey.trim().isNotEmpty;
   static bool get hasSupabaseConfig =>
       _looksLikeHttpUrl(supabaseUrl) && supabaseAnonKey.trim().isNotEmpty;
-  static bool get hasOpenAiKey => openAiApiKey.trim().isNotEmpty;
+  static bool get hasAiBackend => hasApiBaseUrl;
 
   static bool _looksLikeHttpUrl(String value) {
     final trimmed = value.trim().toLowerCase();

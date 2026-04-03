@@ -2,20 +2,52 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import axios from 'axios';
+import rateLimit from 'express-rate-limit';
 import { createClient } from '@supabase/supabase-js';
 
 const app = express();
 const port = Number(process.env.APP_API_PORT || 3000);
+const isProduction = String(process.env.NODE_ENV || 'development').toLowerCase() === 'production';
 
 const corsOrigins = String(process.env.CORS_ORIGINS || '')
   .split(',')
   .map((v) => v.trim())
   .filter(Boolean);
 
+if (isProduction && corsOrigins.length === 0) {
+  console.warn('CORS_ORIGINS is empty in production. Browser origins will be blocked except non-browser clients.');
+}
+
+app.set('trust proxy', 1);
+
+const checkoutRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many checkout requests. Please try again shortly.' },
+});
+
+const aiRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many AI requests. Please wait and try again.' },
+});
+
+const adminRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many admin requests. Please try again shortly.' },
+});
+
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || corsOrigins.length === 0 || corsOrigins.includes(origin)) {
+      if (isAllowedOrigin(origin)) {
         return callback(null, true);
       }
       return callback(new Error('CORS blocked for this origin'));
@@ -24,6 +56,10 @@ app.use(
   }),
 );
 app.use(express.json({ limit: '1mb' }));
+app.use('/api/checkout', checkoutRateLimiter);
+app.use('/api/uploads/sign', checkoutRateLimiter);
+app.use('/api/ai/routine', aiRateLimiter);
+app.use('/api/admin', adminRateLimiter);
 
 const required = [
   'SUPABASE_URL',
@@ -60,12 +96,106 @@ const dhlClient = axios.create({
   timeout: 20000,
 });
 
+const openAiClient = axios.create({
+  baseURL: 'https://api.openai.com/v1',
+  timeout: 25000,
+});
+
 const defaultStorageBucket = String(
   process.env.SUPABASE_STORAGE_BUCKET || 'product-images',
 ).trim();
 
 app.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'delix-backend', ts: new Date().toISOString() });
+});
+
+app.post('/api/ai/routine', async (req, res) => {
+  try {
+    const apiKey = String(process.env.OPENAI_API_KEY || '').trim();
+    if (!apiKey) {
+      return res.status(503).json({ error: 'AI routine service is not configured.' });
+    }
+
+    const body = req.body || {};
+    const skinType = String(body.skinType || '').trim();
+    const concern = String(body.concern || '').trim();
+    const goal = String(body.goal || '').trim();
+    const routineDepth = String(body.routineDepth || '').trim();
+
+    if (!skinType || !concern || !goal || !routineDepth) {
+      return res.status(400).json({
+        error: 'skinType, concern, goal and routineDepth are required.',
+      });
+    }
+
+    const model = String(process.env.OPENAI_MODEL || 'gpt-4o-mini').trim();
+    const prompt = [
+      'You are a skincare expert. Generate one AM routine and one PM routine.',
+      'Return strict JSON only with keys morning and evening.',
+      'Each key must be an array of short step strings. No markdown.',
+      '',
+      'User profile:',
+      `- Skin type: ${skinType}`,
+      `- Main concern: ${concern}`,
+      `- Goal: ${goal}`,
+      `- Depth: ${routineDepth}`,
+    ].join('\n');
+
+    const aiRes = await openAiClient.post(
+      '/chat/completions',
+      {
+        model,
+        messages: [
+          {
+            role: 'system',
+            content: 'Return only valid minified JSON with morning and evening string arrays.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.4,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    const content = String(aiRes.data?.choices?.[0]?.message?.content || '').trim();
+    if (!content) {
+      return res.status(502).json({ error: 'AI provider returned an empty response.' });
+    }
+
+    const parsed = parseJsonObject(content);
+    const morning = Array.isArray(parsed?.morning)
+      ? parsed.morning.map((step) => String(step).trim()).filter(Boolean)
+      : [];
+    const evening = Array.isArray(parsed?.evening)
+      ? parsed.evening.map((step) => String(step).trim()).filter(Boolean)
+      : [];
+
+    if (morning.length === 0 || evening.length === 0) {
+      return res.status(502).json({ error: 'AI provider returned an invalid routine format.' });
+    }
+
+    return res.json({ morning, evening });
+  } catch (error) {
+    const upstreamMessage =
+      error?.response?.data?.error?.message ||
+      error?.response?.data?.message ||
+      error?.message ||
+      'Could not generate AI routine';
+
+    if (Number(error?.response?.status) === 429) {
+      return res.status(429).json({ error: 'AI service is busy. Please try again shortly.' });
+    }
+
+    return res.status(502).json({ error: upstreamMessage });
+  }
 });
 
 app.post('/api/shipping/quote', async (req, res) => {
@@ -195,6 +325,11 @@ app.post('/api/checkout/initialize', async (req, res) => {
       return res.status(400).json({ error: 'Checkout requires at least one item.' });
     }
 
+    const payerEmail = String(user.email || body.email || '').trim();
+    if (!payerEmail) {
+      return res.status(400).json({ error: 'Authenticated user email is required for checkout.' });
+    }
+
     if (!shippingAddress.country || !shippingAddress.addressLine1 || !shippingAddress.city) {
       return res.status(400).json({
         error: 'shippingAddress.country, shippingAddress.addressLine1 and shippingAddress.city are required.',
@@ -250,7 +385,7 @@ app.post('/api/checkout/initialize', async (req, res) => {
     const callbackUrl = String(process.env.PAYSTACK_CALLBACK_URL || '').trim();
 
     const initPayload = {
-      email: String(user.email || body.email || '').trim(),
+      email: payerEmail,
       amount: toSmallestUnit(total, currency),
       reference: orderNumber,
       currency,
@@ -290,7 +425,7 @@ app.post('/api/checkout/initialize', async (req, res) => {
 
 app.post('/api/checkout/verify', async (req, res) => {
   try {
-    await getAuthenticatedUser(req);
+    const user = await getAuthenticatedUser(req);
     const reference = String(req.body?.reference || '').trim();
     if (!reference) {
       return res.status(400).json({ error: 'reference is required.' });
@@ -308,10 +443,25 @@ app.post('/api/checkout/verify', async (req, res) => {
     }
 
     const sb = requireSupabaseAdmin();
+    const { data: existingOrder, error: findOrderError } = await sb
+      .from('orders')
+      .select('id')
+      .eq('order_number', reference)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (findOrderError) {
+      return res.status(500).json({ error: `Could not validate order ownership: ${findOrderError.message}` });
+    }
+    if (!existingOrder) {
+      return res.status(404).json({ error: 'Order not found for the authenticated user.' });
+    }
+
     const { error: updateError } = await sb
       .from('orders')
       .update({ status: 'processing' })
-      .eq('order_number', reference);
+      .eq('id', existingOrder.id)
+      .eq('user_id', user.id);
 
     if (updateError) {
       return res.status(500).json({ error: `Payment verified but order update failed: ${updateError.message}` });
@@ -625,21 +775,29 @@ app.listen(port, () => {
   console.log(`Delix backend listening on http://0.0.0.0:${port}`);
 });
 
+class HttpError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.name = 'HttpError';
+    this.status = status;
+  }
+}
+
 async function getAuthenticatedUser(req) {
   const authHeader = String(req.headers.authorization || '');
   if (!authHeader.startsWith('Bearer ')) {
-    throw new Error('Authorization header is required.');
+    throw new HttpError(401, 'Authorization header is required.');
   }
 
   const token = authHeader.replace('Bearer ', '').trim();
   if (!token) {
-    throw new Error('Authorization token is missing.');
+    throw new HttpError(401, 'Authorization token is missing.');
   }
 
   const sb = requireSupabaseAdmin();
   const { data, error } = await sb.auth.getUser(token);
   if (error || !data?.user) {
-    throw new Error('Authorization failed.');
+    throw new HttpError(401, 'Authorization failed.');
   }
 
   return data.user;
@@ -675,6 +833,37 @@ function requireSupabaseAdmin() {
     throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.');
   }
   return supabaseAdmin;
+}
+
+function isAllowedOrigin(origin) {
+  if (!origin) {
+    // Mobile clients and server-to-server calls generally do not send an Origin header.
+    return true;
+  }
+
+  if (corsOrigins.includes(origin)) {
+    return true;
+  }
+
+  if (!isProduction) {
+    return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
+  }
+
+  return false;
+}
+
+function parseJsonObject(source) {
+  try {
+    return JSON.parse(source);
+  } catch {
+    const match = source.match(/\{[\s\S]*\}/);
+    if (!match) return null;
+    try {
+      return JSON.parse(match[0]);
+    } catch {
+      return null;
+    }
+  }
 }
 
 function safePathSegment(value) {

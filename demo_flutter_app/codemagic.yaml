@@ -204,12 +204,12 @@ workflows:
 
       firebase:
         firebase_service_account: $FIREBASE_SERVICE_ACCOUNT
+        release_notes: |
+          Latest preview build from main branch. Install and test.
         android:
           app_id: $FIREBASE_APP_ID
           groups:
             - testers
-          release_notes: |
-            Latest preview build from main branch. Install and test.
 
 
   # ─────────────────────────────────────────────────────────────

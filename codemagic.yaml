@@ -24,7 +24,7 @@ workflows:
           storePassword=$CM_KEYSTORE_PASSWORD
           keyPassword=$CM_KEY_PASSWORD
           keyAlias=$CM_KEY_ALIAS
-          storeFile=upload-keystore.jks
+          storeFile=../upload-keystore.jks
           EOF
 
       - name: Run static analysis
@@ -82,7 +82,7 @@ workflows:
           storePassword=$CM_KEYSTORE_PASSWORD
           keyPassword=$CM_KEY_PASSWORD
           keyAlias=$CM_KEY_ALIAS
-          storeFile=upload-keystore.jks
+          storeFile=../upload-keystore.jks
           EOF
 
       - name: Build Android APK (Preview)

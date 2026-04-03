@@ -14,7 +14,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.delix.cosmetics"
+    namespace = "app.lovable.c9b19c47b2f943d298800727dc0b62ee"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -29,8 +29,8 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.delix.cosmetics"
+        // Package must match existing Google Play app for updates.
+        applicationId = "app.lovable.c9b19c47b2f943d298800727dc0b62ee"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

@@ -49,3 +49,34 @@ Supabase includes multiple products under one project: Postgres database, Auth, 
 - For product images, you can keep external image URLs (works now), or use Supabase Storage buckets.
 - If you use Storage, upload images to a bucket (for example `product-images`) and store the public URL in `products.image_url`.
 - The app already reads `products.image_url`, so no Flutter code change is needed to switch image source.
+
+## Android Release And Play Console Upload Key
+
+Generate a new upload keystore and Play Console upload certificate:
+
+```bash
+./scripts/generate_upload_keystore.sh
+```
+
+This creates:
+
+- `android/upload-keystore.jks`
+- `android/key.properties`
+- `signing_export/genesis-upload-keystore.jks`
+- `signing_export/CM_KEYSTORE_BASE64_ONE_LINE.txt`
+- `signing_export/upload_certificate.pem`
+
+In Google Play Console, use `signing_export/upload_certificate.pem` when registering or resetting your upload key.
+
+In Codemagic, set these environment variables:
+
+- `CM_KEY_ALIAS`
+- `CM_KEYSTORE_PASSWORD`
+- `CM_KEY_PASSWORD`
+- `CM_KEYSTORE_BASE64` (paste the content of `signing_export/CM_KEYSTORE_BASE64_ONE_LINE.txt`)
+
+Build AAB for Play upload:
+
+```bash
+flutter build appbundle --release --dart-define-from-file=codemagic_defines.json
+```

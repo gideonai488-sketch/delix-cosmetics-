@@ -569,6 +569,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildTopTrendingStrip() {
     final trending = _topTrendingProducts;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final cardWidth = (screenWidth * 0.42).clamp(148.0, 188.0).toDouble();
+    final imageLeftInset = (cardWidth * 0.26).clamp(36.0, 50.0).toDouble();
     return SizedBox(
       height: 220,
       child: ListView.builder(
@@ -585,7 +588,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             child: SizedBox(
-              width: 164,
+              width: cardWidth,
               child: Stack(
                 children: [
                   Positioned(
@@ -602,7 +605,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   Positioned(
-                    left: 42,
+                    left: imageLeftInset,
                     right: 8,
                     top: 14,
                     bottom: 12,
@@ -806,6 +809,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildNewArrivalsStrip() {
     final settings = context.watch<AppSettingsProvider>();
     final arrivals = _newArrivals;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final cardWidth = (screenWidth * 0.44).clamp(152.0, 196.0).toDouble();
     return SizedBox(
       height: 220,
       child: ListView.builder(
@@ -815,7 +820,7 @@ class _HomeScreenState extends State<HomeScreen> {
         itemBuilder: (context, index) {
           final product = arrivals[index];
           return Container(
-            width: 168,
+            width: cardWidth,
             margin: const EdgeInsets.only(right: 12),
             child: GestureDetector(
               onTap: () => Navigator.push(

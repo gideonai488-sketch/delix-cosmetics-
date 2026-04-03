@@ -114,7 +114,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ),
                       const SizedBox(height: 14),
                       // Price row
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 10,
+                        runSpacing: 6,
                         children: [
                           Text(
                             settings.formatMoney(p.price, context),
@@ -124,8 +127,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               color: AppColors.crimson,
                             ),
                           ),
-                          if (p.isOnSale) ...[
-                            const SizedBox(width: 10),
+                          if (p.isOnSale)
                             Text(
                               settings.formatMoney(p.originalPrice, context),
                               style: const TextStyle(
@@ -134,7 +136,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 decoration: TextDecoration.lineThrough,
                               ),
                             ),
-                            const SizedBox(width: 8),
+                          if (p.isOnSale)
                             Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 3),
@@ -151,7 +153,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 ),
                               ),
                             ),
-                          ],
                         ],
                       ),
                       if (p.size != null) ...[
@@ -255,23 +256,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   )
                 ],
               ),
-              child: Row(
-                children: [
-                  // Qty stepper
-                  Container(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isCompact = constraints.maxWidth < 360;
+
+                  final qtyStepper = Container(
                     decoration: BoxDecoration(
                       color: AppColors.muted,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         _qtyButton(
                             Icons.remove, () {
                           if (_quantity > 1) setState(() => _quantity--);
                         }),
                         Padding(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: Text('$_quantity',
                               style: const TextStyle(
                                   fontSize: 15,
@@ -281,32 +283,53 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             Icons.add, () => setState(() => _quantity++)),
                       ],
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        for (var i = 0; i < _quantity; i++) {
-                          cart.addItem(p);
-                        }
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('${p.name} added to cart'),
-                            backgroundColor: AppColors.crimson,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            duration: const Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                      icon: Icon(
-                          inCart ? Icons.shopping_bag : Icons.add_shopping_cart,
-                          size: 18),
-                      label: Text(inCart ? 'Add More' : 'Add to Cart'),
-                    ),
-                  ),
-                ],
+                  );
+
+                  final ctaButton = ElevatedButton.icon(
+                    onPressed: () {
+                      for (var i = 0; i < _quantity; i++) {
+                        cart.addItem(p);
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('${p.name} added to cart'),
+                          backgroundColor: AppColors.crimson,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    icon: Icon(
+                        inCart ? Icons.shopping_bag : Icons.add_shopping_cart,
+                        size: 18),
+                    label: Text(inCart ? 'Add More' : 'Add to Cart'),
+                  );
+
+                  if (isCompact) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: qtyStepper,
+                        ),
+                        const SizedBox(height: 10),
+                        ctaButton,
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      qtyStepper,
+                      const SizedBox(width: 12),
+                      Expanded(child: ctaButton),
+                    ],
+                  );
+                },
               ),
             ),
           ),

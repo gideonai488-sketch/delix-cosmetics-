@@ -19,12 +19,32 @@ workflows:
 
       - name: Configure Android signing
         script: |
-          cp "$CM_BUILD_DIR/demo_flutter_app/signing_export/genesis-upload-keystore.jks" "$CM_BUILD_DIR/demo_flutter_app/android/upload-keystore.jks"
-          STORE_PASS="${CM_KEYSTORE_PASSWORD:-Kwabena2026}"
+          APP_DIR="$CM_BUILD_DIR/demo_flutter_app"
+          if [[ ! -d "$APP_DIR/android" ]]; then
+            APP_DIR="$CM_BUILD_DIR"
+          fi
+          ANDROID_DIR="$APP_DIR/android"
+          KEYSTORE_DEST="$ANDROID_DIR/upload-keystore.jks"
+
+          if [[ -n "${CM_KEYSTORE_BASE64:-}" ]]; then
+            if ! printf '%s' "$CM_KEYSTORE_BASE64" | base64 -d > "$KEYSTORE_DEST" 2>/dev/null; then
+              printf '%s' "$CM_KEYSTORE_BASE64" | base64 -D > "$KEYSTORE_DEST"
+            fi
+          elif [[ -n "${CM_KEYSTORE_PATH:-}" && -f "$CM_KEYSTORE_PATH" ]]; then
+            cp "$CM_KEYSTORE_PATH" "$KEYSTORE_DEST"
+          elif [[ -f "$APP_DIR/signing_export/genesis-upload-keystore.jks" ]]; then
+            cp "$APP_DIR/signing_export/genesis-upload-keystore.jks" "$KEYSTORE_DEST"
+          else
+            echo "No keystore source found. Set CM_KEYSTORE_BASE64 or CM_KEYSTORE_PATH."
+            exit 1
+          fi
+
+          : "${CM_KEYSTORE_PASSWORD:?CM_KEYSTORE_PASSWORD is required}"
+          STORE_PASS="$CM_KEYSTORE_PASSWORD"
           KEY_PASS="${CM_KEY_PASSWORD:-$STORE_PASS}"
           KEY_ALIAS_NAME="${CM_KEY_ALIAS:-upload}"
-          keytool -list -keystore "$CM_BUILD_DIR/demo_flutter_app/android/upload-keystore.jks" -storepass "$STORE_PASS" -alias "$KEY_ALIAS_NAME"
-          cat > "$CM_BUILD_DIR/demo_flutter_app/android/key.properties" <<EOF
+          keytool -list -keystore "$KEYSTORE_DEST" -storepass "$STORE_PASS" -alias "$KEY_ALIAS_NAME"
+          cat > "$ANDROID_DIR/key.properties" <<EOF
           storePassword=$STORE_PASS
           keyPassword=$KEY_PASS
           keyAlias=$KEY_ALIAS_NAME
@@ -81,12 +101,32 @@ workflows:
 
       - name: Configure Android signing
         script: |
-          cp "$CM_BUILD_DIR/demo_flutter_app/signing_export/genesis-upload-keystore.jks" "$CM_BUILD_DIR/demo_flutter_app/android/upload-keystore.jks"
-          STORE_PASS="${CM_KEYSTORE_PASSWORD:-Kwabena2026}"
+          APP_DIR="$CM_BUILD_DIR/demo_flutter_app"
+          if [[ ! -d "$APP_DIR/android" ]]; then
+            APP_DIR="$CM_BUILD_DIR"
+          fi
+          ANDROID_DIR="$APP_DIR/android"
+          KEYSTORE_DEST="$ANDROID_DIR/upload-keystore.jks"
+
+          if [[ -n "${CM_KEYSTORE_BASE64:-}" ]]; then
+            if ! printf '%s' "$CM_KEYSTORE_BASE64" | base64 -d > "$KEYSTORE_DEST" 2>/dev/null; then
+              printf '%s' "$CM_KEYSTORE_BASE64" | base64 -D > "$KEYSTORE_DEST"
+            fi
+          elif [[ -n "${CM_KEYSTORE_PATH:-}" && -f "$CM_KEYSTORE_PATH" ]]; then
+            cp "$CM_KEYSTORE_PATH" "$KEYSTORE_DEST"
+          elif [[ -f "$APP_DIR/signing_export/genesis-upload-keystore.jks" ]]; then
+            cp "$APP_DIR/signing_export/genesis-upload-keystore.jks" "$KEYSTORE_DEST"
+          else
+            echo "No keystore source found. Set CM_KEYSTORE_BASE64 or CM_KEYSTORE_PATH."
+            exit 1
+          fi
+
+          : "${CM_KEYSTORE_PASSWORD:?CM_KEYSTORE_PASSWORD is required}"
+          STORE_PASS="$CM_KEYSTORE_PASSWORD"
           KEY_PASS="${CM_KEY_PASSWORD:-$STORE_PASS}"
           KEY_ALIAS_NAME="${CM_KEY_ALIAS:-upload}"
-          keytool -list -keystore "$CM_BUILD_DIR/demo_flutter_app/android/upload-keystore.jks" -storepass "$STORE_PASS" -alias "$KEY_ALIAS_NAME"
-          cat > "$CM_BUILD_DIR/demo_flutter_app/android/key.properties" <<EOF
+          keytool -list -keystore "$KEYSTORE_DEST" -storepass "$STORE_PASS" -alias "$KEY_ALIAS_NAME"
+          cat > "$ANDROID_DIR/key.properties" <<EOF
           storePassword=$STORE_PASS
           keyPassword=$KEY_PASS
           keyAlias=$KEY_ALIAS_NAME

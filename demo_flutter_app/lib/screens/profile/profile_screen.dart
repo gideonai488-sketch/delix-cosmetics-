@@ -53,62 +53,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildGuest(BuildContext context, AppSettingsProvider settings) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 110,
-            height: 110,
-            decoration: BoxDecoration(
-              color: AppColors.accent,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.person_outline,
-                size: 54, color: AppColors.crimson),
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight - 48),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 110,
+                height: 110,
+                decoration: BoxDecoration(
+                  color: AppColors.accent,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.person_outline,
+                    size: 54, color: AppColors.crimson),
+              ),
+              const SizedBox(height: 20),
+              const Text('Welcome to Delix',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              const Text(
+                'Sign in to track orders, save favourites\nand enjoy personalised shopping.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.mutedForeground, fontSize: 13, height: 1.5),
+              ),
+              const SizedBox(height: 28),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: SupabaseStoreService.isConfigured
+                      ? () => _showAuthSheet(context)
+                      : () => ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                  'Set SUPABASE_URL and SUPABASE_ANON_KEY, then run with --dart-define-from-file=.env.'),
+                            ),
+                          ),
+                  child: const Text('Sign In / Create Account'),
+                ),
+              ),
+              const SizedBox(height: 40),
+              const Divider(color: AppColors.border),
+              const SizedBox(height: 16),
+              _settingRow(
+                Icons.language,
+                'Language',
+                settings.languageLabel,
+                onTap: () => _showLanguagePicker(context, settings),
+              ),
+              _settingRow(
+                Icons.currency_exchange,
+                'Currency',
+                settings.currencyLabel,
+                onTap: () => _showCurrencyPicker(context, settings),
+              ),
+              _settingRow(Icons.info_outline, 'About Delix', null),
+            ],
           ),
-          const SizedBox(height: 20),
-          const Text('Welcome to Delix',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const Text(
-            'Sign in to track orders, save favourites\nand enjoy personalised shopping.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.mutedForeground, fontSize: 13, height: 1.5),
-          ),
-          const SizedBox(height: 28),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: SupabaseStoreService.isConfigured
-                  ? () => _showAuthSheet(context)
-                  : () => ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                              'Set SUPABASE_URL and SUPABASE_ANON_KEY, then run with --dart-define-from-file=.env.'),
-                        ),
-                      ),
-              child: const Text('Sign In / Create Account'),
-            ),
-          ),
-          const SizedBox(height: 40),
-          const Divider(color: AppColors.border),
-          const SizedBox(height: 16),
-          _settingRow(
-            Icons.language,
-            'Language',
-            settings.languageLabel,
-            onTap: () => _showLanguagePicker(context, settings),
-          ),
-          _settingRow(
-            Icons.currency_exchange,
-            'Currency',
-            settings.currencyLabel,
-            onTap: () => _showCurrencyPicker(context, settings),
-          ),
-          _settingRow(Icons.info_outline, 'About Delix', null),
-        ],
+        ),
       ),
     );
   }

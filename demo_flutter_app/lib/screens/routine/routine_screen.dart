@@ -519,6 +519,8 @@ class _RoutineScreenState extends State<RoutineScreen> {
   }
 
   Widget _buildAdvancedCareSection(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final cardWidth = (screenWidth * 0.5).clamp(162.0, 220.0).toDouble();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -533,22 +535,25 @@ class _RoutineScreenState extends State<RoutineScreen> {
           height: 140,
           child: ListView(
             scrollDirection: Axis.horizontal,
-            children: const [
+            children: [
               _AdvancedCareCard(
+                width: cardWidth,
                 title: 'LED Therapy',
                 subtitle: '10 min collagen boost',
                 icon: Icons.light_mode,
                 tone: Color(0xFFFFF1D6),
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               _AdvancedCareCard(
+                width: cardWidth,
                 title: 'Ice Sculpt',
                 subtitle: 'Depuff + tighten',
                 icon: Icons.ac_unit,
                 tone: Color(0xFFE9F4FF),
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               _AdvancedCareCard(
+                width: cardWidth,
                 title: 'Overnight Mask',
                 subtitle: 'Barrier recovery',
                 icon: Icons.night_shelter,
@@ -1004,12 +1009,14 @@ class _StatCard extends StatelessWidget {
 }
 
 class _AdvancedCareCard extends StatelessWidget {
+  final double width;
   final String title;
   final String subtitle;
   final IconData icon;
   final Color tone;
 
   const _AdvancedCareCard({
+    required this.width,
     required this.title,
     required this.subtitle,
     required this.icon,
@@ -1018,45 +1025,47 @@ class _AdvancedCareCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 190,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: tone,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.75),
-              borderRadius: BorderRadius.circular(9),
+    return SizedBox(
+      width: width,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: tone,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.75),
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: Icon(icon, size: 16, color: AppColors.foreground),
             ),
-            child: Icon(icon, size: 16, color: AppColors.foreground),
-          ),
-          const Spacer(),
-          Text(
-            title,
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 14,
-              color: AppColors.foreground,
+            const Spacer(),
+            Text(
+              title,
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 14,
+                color: AppColors.foreground,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.mutedForeground,
-              height: 1.3,
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.mutedForeground,
+                height: 1.3,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

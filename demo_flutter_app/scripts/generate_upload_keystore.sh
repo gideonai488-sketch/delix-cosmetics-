@@ -7,6 +7,8 @@ EXPORT_DIR="$ROOT_DIR/signing_export"
 KEYSTORE_PATH="$ANDROID_DIR/upload-keystore.jks"
 EXPORT_KEYSTORE_PATH="$EXPORT_DIR/genesis-upload-keystore.jks"
 BASE64_PATH="$EXPORT_DIR/CM_KEYSTORE_BASE64.txt"
+BASE64_ONE_LINE_PATH="$EXPORT_DIR/CM_KEYSTORE_BASE64_ONE_LINE.txt"
+UPLOAD_CERT_PATH="$EXPORT_DIR/upload_certificate.pem"
 KEY_PROPERTIES_PATH="$ANDROID_DIR/key.properties"
 
 mkdir -p "$EXPORT_DIR"
@@ -42,7 +44,7 @@ C="${C:-US}"
 
 DNAME="CN=$CN, OU=$OU, O=$O, L=$L, ST=$ST, C=$C"
 
-rm -f "$KEYSTORE_PATH" "$EXPORT_KEYSTORE_PATH" "$BASE64_PATH"
+rm -f "$KEYSTORE_PATH" "$EXPORT_KEYSTORE_PATH" "$BASE64_PATH" "$BASE64_ONE_LINE_PATH" "$UPLOAD_CERT_PATH"
 
 keytool -genkeypair \
   -v \
@@ -65,6 +67,13 @@ EOF
 
 cp "$KEYSTORE_PATH" "$EXPORT_KEYSTORE_PATH"
 base64 -w 0 "$EXPORT_KEYSTORE_PATH" > "$BASE64_PATH"
+tr -d '\n' < "$BASE64_PATH" > "$BASE64_ONE_LINE_PATH"
+
+keytool -export -rfc \
+  -keystore "$EXPORT_KEYSTORE_PATH" \
+  -alias "$KEY_ALIAS" \
+  -file "$UPLOAD_CERT_PATH" \
+  -storepass "$STORE_PASSWORD"
 
 echo
 echo "Done. Generated files:"
@@ -72,9 +81,14 @@ echo "- $KEYSTORE_PATH"
 echo "- $KEY_PROPERTIES_PATH"
 echo "- $EXPORT_KEYSTORE_PATH"
 echo "- $BASE64_PATH"
+echo "- $BASE64_ONE_LINE_PATH"
+echo "- $UPLOAD_CERT_PATH"
 echo
 echo "Use these Codemagic variables:"
 echo "CM_KEY_ALIAS=$KEY_ALIAS"
 echo "CM_KEYSTORE_PASSWORD=<your keystore password>"
 echo "CM_KEY_PASSWORD=<your key password>"
-echo "CM_KEYSTORE_BASE64=<contents of $BASE64_PATH>"
+echo "CM_KEYSTORE_BASE64=<contents of $BASE64_ONE_LINE_PATH>"
+echo
+echo "Upload certificate for Play Console key registration:"
+echo "- $UPLOAD_CERT_PATH"

@@ -1,0 +1,163 @@
+workflows:
+  android_release:
+    name: Android Release
+    max_build_duration: 120
+    instance_type: mac_mini_m1
+
+    environment:
+      flutter: stable
+      groups:
+        - google_play
+      vars:
+        PACKAGE_NAME: "com.example.demo_flutter_app"
+
+    triggering:
+      events:
+        - push
+        - tag
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
+
+    scripts:
+      - name: Install dependencies
+        script: |
+          flutter pub get
+
+      - name: Configure Android signing
+        script: |
+          echo "$CM_KEYSTORE_BASE64" | base64 --decode > "$CM_BUILD_DIR/demo_flutter_app/android/upload-keystore.jks"
+          cat > "$CM_BUILD_DIR/demo_flutter_app/android/key.properties" <<EOF
+          storePassword=$CM_KEYSTORE_PASSWORD
+          keyPassword=$CM_KEY_PASSWORD
+          keyAlias=$CM_KEY_ALIAS
+          storeFile=../upload-keystore.jks
+          EOF
+
+      - name: Run static analysis
+        script: |
+          flutter analyze
+
+      - name: Build Android App Bundle
+        script: |
+          flutter build appbundle --release
+
+    artifacts:
+      - build/**/outputs/**/*.aab
+      - build/**/outputs/**/mapping.txt
+      - flutter_drive.log
+
+    publishing:
+      email:
+        recipients:
+          - build-notify@example.com
+        notify:
+          success: true
+          failure: true
+
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: true
+
+  ios_release:
+    name: iOS Release
+    max_build_duration: 120
+    instance_type: mac_mini_m1
+
+    integrations:
+      app_store_connect: codemagic-app-store-connect
+
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      vars:
+        BUNDLE_ID: "com.example.demoFlutterApp"
+
+    triggering:
+      events:
+        - push
+        - tag
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
+
+    scripts:
+      - name: Install dependencies
+        script: |
+          flutter pub get
+
+      - name: Resolve iOS pods
+        script: |
+          cd ios
+          pod install
+          cd ..
+
+      - name: Build IPA (automatic signing)
+        script: |
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      email:
+        recipients:
+          - build-notify@example.com
+        notify:
+          success: true
+          failure: true
+
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false
+
+  mobile_release_manual:
+    name: Mobile Release (Manual Trigger)
+    max_build_duration: 120
+    instance_type: mac_mini_m1
+
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+
+    triggering:
+      events:
+        - manual
+
+    scripts:
+      - name: Install dependencies
+        script: |
+          flutter pub get
+
+      - name: Configure Android signing
+        script: |
+          echo "$CM_KEYSTORE_BASE64" | base64 --decode > "$CM_BUILD_DIR/demo_flutter_app/android/upload-keystore.jks"
+          cat > "$CM_BUILD_DIR/demo_flutter_app/android/key.properties" <<EOF
+          storePassword=$CM_KEYSTORE_PASSWORD
+          keyPassword=$CM_KEY_PASSWORD
+          keyAlias=$CM_KEY_ALIAS
+          storeFile=../upload-keystore.jks
+          EOF
+
+      - name: Analyze
+        script: |
+          flutter analyze
+
+      - name: Build Android AAB
+        script: |
+          flutter build appbundle --release
+
+      - name: Build iOS IPA
+        script: |
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+
+    artifacts:
+      - build/**/outputs/**/*.aab
+      - build/ios/ipa/*.ipa

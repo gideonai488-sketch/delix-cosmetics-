@@ -1,4 +1,4 @@
-package com.example.demo_flutter_app
+package com.delix.cosmetics
 
 import io.flutter.embedding.android.FlutterActivity
 

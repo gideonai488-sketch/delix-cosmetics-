@@ -1,233 +1,16 @@
 workflows:
-
-  # ─────────────────────────────────────────────────────────────
-  # 1. ANDROID RELEASE  →  Google Play (internal track)
-  # ─────────────────────────────────────────────────────────────
-  android_release:
-    name: Android Release → Google Play
+  android_manual:
+    name: Android Manual Build (AAB)
     max_build_duration: 120
     instance_type: mac_mini_m1
 
     environment:
       flutter: stable
       groups:
-        - google_play          # GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
-        - app_secrets          # SUPABASE_URL, SUPABASE_ANON_KEY, APP_API_BASE_URL, PAYSTACK_PUBLIC_KEY
-        - android_signing      # CM_KEYSTORE_BASE64, CM_KEYSTORE_PASSWORD, CM_KEY_PASSWORD, CM_KEY_ALIAS
-      vars:
-        PACKAGE_NAME: "com.delix.cosmetics"
-
-    triggering:
-      events:
-        - tag
-      branch_patterns:
-        - pattern: main
-          include: true
-          source: true
-      tag_patterns:
-        - pattern: 'v*'
-          include: true
-
-    scripts:
-      - name: Install dependencies
-        script: |
-          flutter pub get
-
-      - name: Configure Android signing
-        script: |
-          echo "$CM_KEYSTORE_BASE64" | base64 --decode > "$CM_BUILD_DIR/demo_flutter_app/android/upload-keystore.jks"
-          cat > "$CM_BUILD_DIR/demo_flutter_app/android/key.properties" <<EOF
-          storePassword=$CM_KEYSTORE_PASSWORD
-          keyPassword=$CM_KEY_PASSWORD
-          keyAlias=$CM_KEY_ALIAS
-          storeFile=../upload-keystore.jks
-          EOF
-
-      - name: Run static analysis
-        script: flutter analyze
-
-      - name: Build Android App Bundle (AAB)
-        script: |
-          flutter build appbundle --release \
-            --dart-define=SUPABASE_URL=$SUPABASE_URL \
-            --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
-            --dart-define=APP_API_BASE_URL=$APP_API_BASE_URL \
-            --dart-define=PAYSTACK_PUBLIC_KEY=$PAYSTACK_PUBLIC_KEY
-
-    artifacts:
-      - build/**/outputs/**/*.aab
-      - build/**/outputs/**/mapping.txt
-
-    publishing:
-      email:
-        recipients:
-          - gideonai488@gmail.com
-        notify:
-          success: true
-          failure: true
-
-      google_play:
-        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
-        track: internal
-        submit_as_draft: true
-
-
-  # ─────────────────────────────────────────────────────────────
-  # 2. iOS RELEASE  →  TestFlight
-  # ─────────────────────────────────────────────────────────────
-  ios_release:
-    name: iOS Release → TestFlight
-    max_build_duration: 120
-    instance_type: mac_mini_m1
-
-    integrations:
-      app_store_connect: codemagic-app-store-connect
-
-    environment:
-      flutter: stable
-      xcode: latest
-      cocoapods: default
-      groups:
-        - app_secrets
-      vars:
-        BUNDLE_ID: "com.delix.cosmetics"
-        APP_STORE_APPLE_ID: "YOUR_APPLE_APP_ID"
-
-    triggering:
-      events:
-        - tag
-      branch_patterns:
-        - pattern: main
-          include: true
-          source: true
-      tag_patterns:
-        - pattern: 'v*'
-          include: true
-
-    scripts:
-      - name: Install dependencies
-        script: flutter pub get
-
-      - name: Resolve iOS pods
-        script: |
-          cd ios && pod install && cd ..
-
-      - name: Run static analysis
-        script: flutter analyze
-
-      - name: Build IPA
-        script: |
-          flutter build ipa --release \
-            --export-options-plist=ios/ExportOptions.plist \
-            --dart-define=SUPABASE_URL=$SUPABASE_URL \
-            --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
-            --dart-define=APP_API_BASE_URL=$APP_API_BASE_URL \
-            --dart-define=PAYSTACK_PUBLIC_KEY=$PAYSTACK_PUBLIC_KEY
-
-    artifacts:
-      - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
-
-    publishing:
-      email:
-        recipients:
-          - gideonai488@gmail.com
-        notify:
-          success: true
-          failure: true
-
-      app_store_connect:
-        auth: integration
-        submit_to_testflight: true
-        submit_to_app_store: false
-
-
-  # ─────────────────────────────────────────────────────────────
-  # 3. ANDROID QUICK PREVIEW  →  Firebase App Distribution
-  #    Push to main → testers get a shareable install link
-  # ─────────────────────────────────────────────────────────────
-  android_preview:
-    name: Android Preview (Quick Launch)
-    max_build_duration: 60
-    instance_type: mac_mini_m1
-
-    environment:
-      flutter: stable
-      groups:
-        - firebase_credentials
         - app_secrets
         - android_signing
       vars:
         PACKAGE_NAME: "com.delix.cosmetics"
-        FIREBASE_APP_ID: "YOUR_FIREBASE_ANDROID_APP_ID"
-
-    triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: main
-          include: true
-          source: true
-
-    scripts:
-      - name: Install dependencies
-        script: flutter pub get
-
-      - name: Configure Android signing
-        script: |
-          echo "$CM_KEYSTORE_BASE64" | base64 --decode > "$CM_BUILD_DIR/demo_flutter_app/android/upload-keystore.jks"
-          cat > "$CM_BUILD_DIR/demo_flutter_app/android/key.properties" <<EOF
-          storePassword=$CM_KEYSTORE_PASSWORD
-          keyPassword=$CM_KEY_PASSWORD
-          keyAlias=$CM_KEY_ALIAS
-          storeFile=../upload-keystore.jks
-          EOF
-
-      - name: Build APK for preview
-        script: |
-          flutter build apk --release \
-            --dart-define=SUPABASE_URL=$SUPABASE_URL \
-            --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
-            --dart-define=APP_API_BASE_URL=$APP_API_BASE_URL \
-            --dart-define=PAYSTACK_PUBLIC_KEY=$PAYSTACK_PUBLIC_KEY
-
-    artifacts:
-      - build/app/outputs/flutter-apk/app-release.apk
-
-    publishing:
-      email:
-        recipients:
-          - gideonai488@gmail.com
-        notify:
-          success: true
-          failure: true
-
-      firebase:
-        firebase_service_account: $FIREBASE_SERVICE_ACCOUNT
-        android:
-          app_id: $FIREBASE_APP_ID
-          groups:
-            - testers
-
-
-  # ─────────────────────────────────────────────────────────────
-  # 4. MANUAL FULL RELEASE  (trigger both platforms manually)
-  # ─────────────────────────────────────────────────────────────
-  manual_release:
-    name: Manual Full Release (Android + iOS)
-    max_build_duration: 120
-    instance_type: mac_mini_m1
-
-    integrations:
-      app_store_connect: codemagic-app-store-connect
-
-    environment:
-      flutter: stable
-      xcode: latest
-      cocoapods: default
-      groups:
-        - app_secrets
-        - android_signing
 
     triggering:
       events:
@@ -247,13 +30,10 @@ workflows:
           storeFile=../upload-keystore.jks
           EOF
 
-      - name: Resolve iOS pods
-        script: cd ios && pod install && cd ..
-
       - name: Run static analysis
         script: flutter analyze
 
-      - name: Build Android AAB
+      - name: Build Android App Bundle
         script: |
           flutter build appbundle --release \
             --dart-define=SUPABASE_URL=$SUPABASE_URL \
@@ -261,20 +41,9 @@ workflows:
             --dart-define=APP_API_BASE_URL=$APP_API_BASE_URL \
             --dart-define=PAYSTACK_PUBLIC_KEY=$PAYSTACK_PUBLIC_KEY
 
-      - name: Build iOS IPA
-        script: |
-          flutter build ipa --release \
-            --export-options-plist=ios/ExportOptions.plist \
-            --dart-define=SUPABASE_URL=$SUPABASE_URL \
-            --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
-            --dart-define=APP_API_BASE_URL=$APP_API_BASE_URL \
-            --dart-define=PAYSTACK_PUBLIC_KEY=$PAYSTACK_PUBLIC_KEY
-
     artifacts:
       - build/**/outputs/**/*.aab
-      - build/ios/ipa/*.ipa
       - build/**/outputs/**/mapping.txt
-      - /tmp/xcodebuild_logs/*.log
 
     publishing:
       email:

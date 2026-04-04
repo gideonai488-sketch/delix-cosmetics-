@@ -23,6 +23,7 @@ workflows:
           fi
           ANDROID_DIR="$APP_DIR/android"
           KEYSTORE_DEST="$ANDROID_DIR/upload-keystore.jks"
+          KEY_PROPERTIES_FILE="$ANDROID_DIR/key.properties"
 
           if [[ -n "${CM_KEYSTORE_BASE64:-}" ]]; then
             if ! printf '%s' "$CM_KEYSTORE_BASE64" | base64 -d > "$KEYSTORE_DEST" 2>/dev/null; then
@@ -37,10 +38,26 @@ workflows:
             exit 1
           fi
 
-          : "${CM_KEYSTORE_PASSWORD:?CM_KEYSTORE_PASSWORD is required}"
-          STORE_PASS="$CM_KEYSTORE_PASSWORD"
-          KEY_PASS="${CM_KEY_PASSWORD:-$STORE_PASS}"
-          KEY_ALIAS_NAME="${CM_KEY_ALIAS:-upload}"
+          if [[ -n "${CM_KEYSTORE_PASSWORD:-}" ]]; then
+            STORE_PASS="$CM_KEYSTORE_PASSWORD"
+            KEY_PASS="${CM_KEY_PASSWORD:-$STORE_PASS}"
+            KEY_ALIAS_NAME="${CM_KEY_ALIAS:-upload}"
+          elif [[ -f "$KEY_PROPERTIES_FILE" ]]; then
+            STORE_PASS="$(grep -E '^storePassword=' "$KEY_PROPERTIES_FILE" | head -n1 | cut -d'=' -f2-)"
+            KEY_PASS="$(grep -E '^keyPassword=' "$KEY_PROPERTIES_FILE" | head -n1 | cut -d'=' -f2-)"
+            KEY_ALIAS_NAME="$(grep -E '^keyAlias=' "$KEY_PROPERTIES_FILE" | head -n1 | cut -d'=' -f2-)"
+            if [[ -z "$STORE_PASS" || -z "$KEY_ALIAS_NAME" ]]; then
+              echo "Missing storePassword/keyAlias in $KEY_PROPERTIES_FILE"
+              exit 1
+            fi
+            if [[ -z "$KEY_PASS" ]]; then
+              KEY_PASS="$STORE_PASS"
+            fi
+          else
+            echo "CM_KEYSTORE_PASSWORD not set and $KEY_PROPERTIES_FILE not found."
+            exit 1
+          fi
+
           keytool -list -keystore "$KEYSTORE_DEST" -storepass "$STORE_PASS" -alias "$KEY_ALIAS_NAME"
           cat > "$ANDROID_DIR/key.properties" <<EOF
           storePassword=$STORE_PASS
@@ -100,6 +117,7 @@ workflows:
           fi
           ANDROID_DIR="$APP_DIR/android"
           KEYSTORE_DEST="$ANDROID_DIR/upload-keystore.jks"
+          KEY_PROPERTIES_FILE="$ANDROID_DIR/key.properties"
 
           if [[ -n "${CM_KEYSTORE_BASE64:-}" ]]; then
             if ! printf '%s' "$CM_KEYSTORE_BASE64" | base64 -d > "$KEYSTORE_DEST" 2>/dev/null; then
@@ -114,10 +132,26 @@ workflows:
             exit 1
           fi
 
-          : "${CM_KEYSTORE_PASSWORD:?CM_KEYSTORE_PASSWORD is required}"
-          STORE_PASS="$CM_KEYSTORE_PASSWORD"
-          KEY_PASS="${CM_KEY_PASSWORD:-$STORE_PASS}"
-          KEY_ALIAS_NAME="${CM_KEY_ALIAS:-upload}"
+          if [[ -n "${CM_KEYSTORE_PASSWORD:-}" ]]; then
+            STORE_PASS="$CM_KEYSTORE_PASSWORD"
+            KEY_PASS="${CM_KEY_PASSWORD:-$STORE_PASS}"
+            KEY_ALIAS_NAME="${CM_KEY_ALIAS:-upload}"
+          elif [[ -f "$KEY_PROPERTIES_FILE" ]]; then
+            STORE_PASS="$(grep -E '^storePassword=' "$KEY_PROPERTIES_FILE" | head -n1 | cut -d'=' -f2-)"
+            KEY_PASS="$(grep -E '^keyPassword=' "$KEY_PROPERTIES_FILE" | head -n1 | cut -d'=' -f2-)"
+            KEY_ALIAS_NAME="$(grep -E '^keyAlias=' "$KEY_PROPERTIES_FILE" | head -n1 | cut -d'=' -f2-)"
+            if [[ -z "$STORE_PASS" || -z "$KEY_ALIAS_NAME" ]]; then
+              echo "Missing storePassword/keyAlias in $KEY_PROPERTIES_FILE"
+              exit 1
+            fi
+            if [[ -z "$KEY_PASS" ]]; then
+              KEY_PASS="$STORE_PASS"
+            fi
+          else
+            echo "CM_KEYSTORE_PASSWORD not set and $KEY_PROPERTIES_FILE not found."
+            exit 1
+          fi
+
           keytool -list -keystore "$KEYSTORE_DEST" -storepass "$STORE_PASS" -alias "$KEY_ALIAS_NAME"
           cat > "$ANDROID_DIR/key.properties" <<EOF
           storePassword=$STORE_PASS

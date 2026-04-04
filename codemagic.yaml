@@ -75,10 +75,27 @@ workflows:
           cd demo_flutter_app
           flutter analyze
 
+      - name: Resolve app version for CI build
+        script: |
+          cd demo_flutter_app
+          APP_VERSION_LINE="$(grep -E '^version:' pubspec.yaml | head -n1 | cut -d':' -f2- | xargs)"
+          APP_BUILD_NAME="${APP_VERSION_LINE%%+*}"
+          APP_BUILD_NUMBER="${CM_BUILD_ID:-$(date +%s)}"
+          {
+            echo "APP_BUILD_NAME=$APP_BUILD_NAME"
+            echo "APP_BUILD_NUMBER=$APP_BUILD_NUMBER"
+          } >> "$CM_ENV"
+          echo "Using build name: $APP_BUILD_NAME"
+          echo "Using build number: $APP_BUILD_NUMBER"
+
       - name: Build Android App Bundle
         script: |
           cd demo_flutter_app
-          flutter build appbundle --release --dart-define-from-file=codemagic_defines.json
+          flutter build appbundle \
+            --release \
+            --build-name="$APP_BUILD_NAME" \
+            --build-number="$APP_BUILD_NUMBER" \
+            --dart-define-from-file=codemagic_defines.json
 
     artifacts:
       - demo_flutter_app/build/app/outputs/bundle/release/app-release.aab
@@ -171,10 +188,27 @@ workflows:
           storeFile=../upload-keystore.jks
           EOF
 
+      - name: Resolve app version for CI build
+        script: |
+          cd demo_flutter_app
+          APP_VERSION_LINE="$(grep -E '^version:' pubspec.yaml | head -n1 | cut -d':' -f2- | xargs)"
+          APP_BUILD_NAME="${APP_VERSION_LINE%%+*}"
+          APP_BUILD_NUMBER="${CM_BUILD_ID:-$(date +%s)}"
+          {
+            echo "APP_BUILD_NAME=$APP_BUILD_NAME"
+            echo "APP_BUILD_NUMBER=$APP_BUILD_NUMBER"
+          } >> "$CM_ENV"
+          echo "Using build name: $APP_BUILD_NAME"
+          echo "Using build number: $APP_BUILD_NUMBER"
+
       - name: Build Android APK (Preview)
         script: |
           cd demo_flutter_app
-          flutter build apk --release --dart-define-from-file=codemagic_defines.json
+          flutter build apk \
+            --release \
+            --build-name="$APP_BUILD_NAME" \
+            --build-number="$APP_BUILD_NUMBER" \
+            --dart-define-from-file=codemagic_defines.json
 
     artifacts:
       - demo_flutter_app/build/app/outputs/flutter-apk/app-release.apk

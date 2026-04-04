@@ -75,7 +75,22 @@ workflows:
         script: |
           APP_VERSION_LINE="$(grep -E '^version:' pubspec.yaml | head -n1 | cut -d':' -f2- | xargs)"
           APP_BUILD_NAME="${APP_VERSION_LINE%%+*}"
-          APP_BUILD_NUMBER="${CM_BUILD_ID:-$(date +%s)}"
+          RAW_BUILD_NUMBER="${CM_BUILD_NUMBER:-}"
+          if ! [[ "$RAW_BUILD_NUMBER" =~ ^[0-9]+$ ]]; then
+            RAW_BUILD_NUMBER="$(printf '%s' "${CM_BUILD_ID:-}" | tr -cd '0-9')"
+          fi
+          RAW_BUILD_NUMBER="$(printf '%s' "$RAW_BUILD_NUMBER" | sed 's/^0*//')"
+          if [[ -z "$RAW_BUILD_NUMBER" ]]; then
+            RAW_BUILD_NUMBER="$(date +%s)"
+          fi
+          if [[ ${#RAW_BUILD_NUMBER} -gt 9 ]]; then
+            APP_BUILD_NUMBER="${RAW_BUILD_NUMBER: -9}"
+          else
+            APP_BUILD_NUMBER="$RAW_BUILD_NUMBER"
+          fi
+          if [[ "$APP_BUILD_NUMBER" -lt 1 ]]; then
+            APP_BUILD_NUMBER="$(date +%s)"
+          fi
           {
             echo "APP_BUILD_NAME=$APP_BUILD_NAME"
             echo "APP_BUILD_NUMBER=$APP_BUILD_NUMBER"
@@ -184,7 +199,22 @@ workflows:
         script: |
           APP_VERSION_LINE="$(grep -E '^version:' pubspec.yaml | head -n1 | cut -d':' -f2- | xargs)"
           APP_BUILD_NAME="${APP_VERSION_LINE%%+*}"
-          APP_BUILD_NUMBER="${CM_BUILD_ID:-$(date +%s)}"
+          RAW_BUILD_NUMBER="${CM_BUILD_NUMBER:-}"
+          if ! [[ "$RAW_BUILD_NUMBER" =~ ^[0-9]+$ ]]; then
+            RAW_BUILD_NUMBER="$(printf '%s' "${CM_BUILD_ID:-}" | tr -cd '0-9')"
+          fi
+          RAW_BUILD_NUMBER="$(printf '%s' "$RAW_BUILD_NUMBER" | sed 's/^0*//')"
+          if [[ -z "$RAW_BUILD_NUMBER" ]]; then
+            RAW_BUILD_NUMBER="$(date +%s)"
+          fi
+          if [[ ${#RAW_BUILD_NUMBER} -gt 9 ]]; then
+            APP_BUILD_NUMBER="${RAW_BUILD_NUMBER: -9}"
+          else
+            APP_BUILD_NUMBER="$RAW_BUILD_NUMBER"
+          fi
+          if [[ "$APP_BUILD_NUMBER" -lt 1 ]]; then
+            APP_BUILD_NUMBER="$(date +%s)"
+          fi
           {
             echo "APP_BUILD_NAME=$APP_BUILD_NAME"
             echo "APP_BUILD_NUMBER=$APP_BUILD_NUMBER"

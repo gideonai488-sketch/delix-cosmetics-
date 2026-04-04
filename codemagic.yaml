@@ -9,7 +9,7 @@ workflows:
       groups:
         - android_signing
       vars:
-        PACKAGE_NAME: "app.lovable.c9b19c47b2f943d298800727dc0b62ee"
+        PACKAGE_NAME: "com.delix.cosmetics.app2026"
 
     scripts:
       - name: Install dependencies
@@ -102,7 +102,7 @@ workflows:
       groups:
         - android_signing
       vars:
-        PACKAGE_NAME: "app.lovable.c9b19c47b2f943d298800727dc0b62ee"
+        PACKAGE_NAME: "com.delix.cosmetics.app2026"
 
     triggering:
       events:

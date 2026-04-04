@@ -1,4 +1,4 @@
-package app.lovable.c9b19c47b2f943d298800727dc0b62ee
+package com.delix.cosmetics.app2026
 
 import io.flutter.embedding.android.FlutterActivity
 

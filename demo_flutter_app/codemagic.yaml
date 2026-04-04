@@ -54,8 +54,10 @@ workflows:
               KEY_PASS="$STORE_PASS"
             fi
           else
-            echo "CM_KEYSTORE_PASSWORD not set and $KEY_PROPERTIES_FILE not found."
-            exit 1
+            STORE_PASS="${CM_DEFAULT_KEYSTORE_PASSWORD:-Kwabena2026}"
+            KEY_PASS="${CM_DEFAULT_KEY_PASSWORD:-$STORE_PASS}"
+            KEY_ALIAS_NAME="${CM_DEFAULT_KEY_ALIAS:-upload}"
+            echo "CM_KEYSTORE_PASSWORD not set and $KEY_PROPERTIES_FILE not found. Using default signing fallback alias=$KEY_ALIAS_NAME."
           fi
 
           keytool -list -keystore "$KEYSTORE_DEST" -storepass "$STORE_PASS" -alias "$KEY_ALIAS_NAME"
@@ -148,8 +150,10 @@ workflows:
               KEY_PASS="$STORE_PASS"
             fi
           else
-            echo "CM_KEYSTORE_PASSWORD not set and $KEY_PROPERTIES_FILE not found."
-            exit 1
+            STORE_PASS="${CM_DEFAULT_KEYSTORE_PASSWORD:-Kwabena2026}"
+            KEY_PASS="${CM_DEFAULT_KEY_PASSWORD:-$STORE_PASS}"
+            KEY_ALIAS_NAME="${CM_DEFAULT_KEY_ALIAS:-upload}"
+            echo "CM_KEYSTORE_PASSWORD not set and $KEY_PROPERTIES_FILE not found. Using default signing fallback alias=$KEY_ALIAS_NAME."
           fi
 
           keytool -list -keystore "$KEYSTORE_DEST" -storepass "$STORE_PASS" -alias "$KEY_ALIAS_NAME"

@@ -20,7 +20,7 @@ void main() async {
   if (AppConfig.hasSupabaseConfig) {
     try {
       await Supabase.initialize(
-        url: AppConfig.supabaseUrl,
+        url: AppConfig.normalizedSupabaseUrl,
         anonKey: AppConfig.supabaseAnonKey,
       );
     } catch (error) {

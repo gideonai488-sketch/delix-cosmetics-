@@ -21,14 +21,24 @@ class AppConfig {
     defaultValue: '',
   );
 
+  static String get normalizedSupabaseUrl => _normalizeHttpUrl(supabaseUrl);
+
   static bool get hasApiBaseUrl => apiBaseUrl.trim().isNotEmpty;
   static bool get hasPaystackPublicKey => paystackPublicKey.trim().isNotEmpty;
   static bool get hasSupabaseConfig =>
-      _looksLikeHttpUrl(supabaseUrl) && supabaseAnonKey.trim().isNotEmpty;
+      _looksLikeHttpUrl(normalizedSupabaseUrl) &&
+      supabaseAnonKey.trim().isNotEmpty;
   static bool get hasAiBackend => hasApiBaseUrl;
 
   static bool _looksLikeHttpUrl(String value) {
     final trimmed = value.trim().toLowerCase();
     return trimmed.startsWith('http://') || trimmed.startsWith('https://');
+  }
+
+  static String _normalizeHttpUrl(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return '';
+    if (_looksLikeHttpUrl(trimmed)) return trimmed;
+    return 'https://$trimmed';
   }
 }

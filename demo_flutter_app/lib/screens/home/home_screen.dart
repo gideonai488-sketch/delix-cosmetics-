@@ -110,11 +110,16 @@ class _HomeScreenState extends State<HomeScreen> {
             : null;
       });
     } catch (error) {
+      final message = error.toString();
+      final hasHostLookupError =
+          message.toLowerCase().contains('failed host lookup');
       if (!mounted) return;
       setState(() {
         _catalog = const [];
         _isLoadingCatalog = false;
-        _catalogError = 'Could not load products from Supabase: $error';
+        _catalogError = hasHostLookupError
+            ? 'Could not reach Supabase host. Check SUPABASE_URL and ensure it uses https:// (example: https://your-project.supabase.co).'
+            : 'Could not load products from Supabase: $error';
       });
     }
   }

@@ -66,33 +66,45 @@ class SupabaseStoreService {
 
   static Future<List<Product>> fetchProducts() async {
     _ensureConfigured();
-    final response = await _client
+    try {
+      final response = await _client
         .from('products')
         .select()
         .eq('is_active', true)
         .order('created_at', ascending: false);
 
-    final rows = response as List<dynamic>;
-    return rows
+      final rows = response as List<dynamic>;
+      return rows
         .map((row) => Product.fromMap(Map<String, dynamic>.from(row as Map)))
         .toList();
+    } catch (e, stack) {
+      // In production, consider sending this to a remote logger or analytics
+      print('[SupabaseStoreService.fetchProducts] ERROR: '
+        '[31m$e\n$stack\u001b[0m');
+      rethrow;
+    }
   }
 
   static Future<List<OrderSummary>> fetchOrdersForCurrentUser() async {
     _ensureConfigured();
     final user = currentUser;
     if (user == null) return const [];
-
-    final response = await _client
+    try {
+      final response = await _client
         .from('orders')
         .select('id, order_number, created_at, total, status, order_items(product_name, quantity)')
         .eq('user_id', user.id)
         .order('created_at', ascending: false);
 
-    final rows = response as List<dynamic>;
-    return rows
+      final rows = response as List<dynamic>;
+      return rows
         .map((row) => OrderSummary.fromMap(Map<String, dynamic>.from(row as Map)))
         .toList();
+    } catch (e, stack) {
+      print('[SupabaseStoreService.fetchOrdersForCurrentUser] ERROR: '
+        '\u001b[31m$e\n$stack\u001b[0m');
+      rethrow;
+    }
   }
 
   static void _ensureConfigured() {

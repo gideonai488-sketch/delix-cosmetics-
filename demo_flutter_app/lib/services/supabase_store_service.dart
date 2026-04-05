@@ -79,8 +79,10 @@ class SupabaseStoreService {
         .toList();
     } catch (e, stack) {
       // In production, consider sending this to a remote logger or analytics
-      print('[SupabaseStoreService.fetchProducts] ERROR: '
-        '[31m$e\n$stack\u001b[0m');
+        if (kDebugMode) {
+          print('[SupabaseStoreService.fetchProducts] ERROR: '
+              '\u001b[31m$e\n$stack\u001b[0m');
+        }
       rethrow;
     }
   }
@@ -101,8 +103,10 @@ class SupabaseStoreService {
         .map((row) => OrderSummary.fromMap(Map<String, dynamic>.from(row as Map)))
         .toList();
     } catch (e, stack) {
-      print('[SupabaseStoreService.fetchOrdersForCurrentUser] ERROR: '
-        '\u001b[31m$e\n$stack\u001b[0m');
+        if (kDebugMode) {
+          print('[SupabaseStoreService.fetchOrdersForCurrentUser] ERROR: '
+              '\u001b[31m$e\n$stack\u001b[0m');
+        }
       rethrow;
     }
   }

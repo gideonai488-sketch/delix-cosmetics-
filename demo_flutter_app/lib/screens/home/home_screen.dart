@@ -374,8 +374,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                   itemBuilder: (context, index) {
                     final product = trending[index];
-                    final campaignImage =
-                        _heroCampaignImages[index % _heroCampaignImages.length];
                     return AnimatedBuilder(
                       animation: _bannerController,
                       builder: (context, child) {
@@ -406,13 +404,39 @@ class _HomeScreenState extends State<HomeScreen> {
                                   children: [
                                     Transform.translate(
                                       offset: Offset(parallax, 0),
-                                      child: CachedNetworkImage(
-                                        imageUrl: campaignImage,
-                                        fit: BoxFit.cover,
-                                        errorWidget: (context, error, stackTrace) => Container(
-                                          color: AppColors.crimsonDark,
-                                        ),
-                                      ),
+                                      child: product.imageUrl.isEmpty
+                                          ? Container(
+                                              color: AppColors.crimsonDark,
+                                              child: const Center(
+                                                child: Icon(
+                                                  Icons.image_not_supported_outlined,
+                                                  size: 60,
+                                                  color: Colors.white30,
+                                                ),
+                                              ),
+                                            )
+                                          : CachedNetworkImage(
+                                              imageUrl: product.imageUrl,
+                                              fit: BoxFit.cover,
+                                              placeholder: (_, __) => Container(
+                                                color: AppColors.crimsonDark,
+                                                child: const Center(
+                                                  child: CircularProgressIndicator(
+                                                    color: Colors.white30,
+                                                  ),
+                                                ),
+                                              ),
+                                              errorWidget: (context, error, stackTrace) => Container(
+                                                color: AppColors.crimsonDark,
+                                                child: const Center(
+                                                  child: Icon(
+                                                    Icons.broken_image_outlined,
+                                                    size: 60,
+                                                    color: Colors.white30,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
                                     ),
                                     Container(
                                       decoration: const BoxDecoration(

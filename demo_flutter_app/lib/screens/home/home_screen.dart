@@ -13,18 +13,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/product_card.dart';
 import '../product/product_detail_screen.dart';
 
-final _heroCampaignImages = [
-  'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=1200&q=80',
-  'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=1200&q=80',
-  'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=1200&q=80',
-  'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=1200&q=80',
-  'https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=1200&q=80',
-  'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=1200&q=80',
-  'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=1200&q=80',
-  'https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?w=1200&q=80',
-  'https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=1200&q=80',
-  'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=1200&q=80',
-];
+
 
 class _CampaignCardData {
   final String title;
@@ -418,7 +407,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           : CachedNetworkImage(
                                               imageUrl: product.imageUrl,
                                               fit: BoxFit.cover,
-                                              placeholder: (_, __) => Container(
+                                              placeholder: (context, url) => Container(
                                                 color: AppColors.crimsonDark,
                                                 child: const Center(
                                                   child: CircularProgressIndicator(

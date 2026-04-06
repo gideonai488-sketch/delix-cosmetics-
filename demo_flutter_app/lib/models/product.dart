@@ -69,7 +69,14 @@ class Product {
       isOnSale ? ((1 - price / originalPrice) * 100).round() : 0;
 
   factory Product.fromMap(Map<String, dynamic> map) {
+    final rawImageUrl = map['image_url'];
     final imageUrl = _normalizeImageUrl(map['image_url']?.toString() ?? '');
+    
+    print('[Product.fromMap] Product: ${map['name']}');
+    print('  Raw image_url value: $rawImageUrl (type: ${rawImageUrl.runtimeType})');
+    print('  Normalized imageUrl: $imageUrl');
+    print('  Map keys: ${map.keys.toList()}');
+    
     return Product(
       id: map['id'].toString(),
       name: map['name']?.toString() ?? '',

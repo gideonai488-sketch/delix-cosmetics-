@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 enum ProductCategory { skincare, hairStyling, makeup, fragrance, bodycare }
 
 extension ProductCategoryExt on ProductCategory {
@@ -72,10 +74,12 @@ class Product {
     final rawImageUrl = map['image_url'];
     final imageUrl = _normalizeImageUrl(map['image_url']?.toString() ?? '');
     
-    print('[Product.fromMap] Product: ${map['name']}');
-    print('  Raw image_url value: $rawImageUrl (type: ${rawImageUrl.runtimeType})');
-    print('  Normalized imageUrl: $imageUrl');
-    print('  Map keys: ${map.keys.toList()}');
+    if (kDebugMode) {
+      print('[Product.fromMap] Product: ${map['name']}');
+      print('  Raw image_url value: $rawImageUrl (type: ${rawImageUrl.runtimeType})');
+      print('  Normalized imageUrl: $imageUrl');
+      print('  Map keys: ${map.keys.toList()}');
+    }
     
     return Product(
       id: map['id'].toString(),

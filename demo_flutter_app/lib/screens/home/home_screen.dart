@@ -853,12 +853,46 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     ClipRRect(
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                      child: CachedNetworkImage(
-                        imageUrl: product.imageUrl,
-                        height: 130,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
+                      child: product.imageUrl.isEmpty
+                          ? Container(
+                              height: 130,
+                              width: double.infinity,
+                              color: AppColors.muted,
+                              child: const Center(
+                                child: Icon(
+                                  Icons.image_not_supported_outlined,
+                                  size: 32,
+                                  color: AppColors.mutedForeground,
+                                ),
+                              ),
+                            )
+                          : CachedNetworkImage(
+                              imageUrl: product.imageUrl,
+                              height: 130,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
+                                height: 130,
+                                color: AppColors.muted,
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.crimson,
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (context, error, stackTrace) => Container(
+                                height: 130,
+                                color: AppColors.muted,
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.broken_image_outlined,
+                                    size: 32,
+                                    color: AppColors.mutedForeground,
+                                  ),
+                                ),
+                              ),
+                            ),
                     ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),

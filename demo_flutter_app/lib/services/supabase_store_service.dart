@@ -69,6 +69,9 @@ class SupabaseStoreService {
   static Future<List<Product>> fetchProducts() async {
     _ensureConfigured();
     try {
+      if (kDebugMode) {
+        print('[SupabaseStoreService.fetchProducts] Starting product fetch...');
+      }
       final response = await _client
         .from('products')
         .select()
@@ -76,15 +79,30 @@ class SupabaseStoreService {
         .order('created_at', ascending: false);
 
       final rows = response as List<dynamic>;
-      return rows
+      if (kDebugMode) {
+        print('[SupabaseStoreService.fetchProducts] Fetched ${rows.length} products');
+      }
+      
+      final products = rows
         .map((row) => Product.fromMap(Map<String, dynamic>.from(row as Map)))
         .toList();
-    } catch (e, stack) {
-      // In production, consider sending this to a remote logger or analytics
-        if (kDebugMode) {
-          print('[SupabaseStoreService.fetchProducts] ERROR: '
-              '\u001b[31m$e\n$stack\u001b[0m');
+      
+      if (kDebugMode) {
+        for (final product in products) {
+          final imageStatus = product.imageUrl.isEmpty ? 'EMPTY' : 'OK';
+          print('[SupabaseStoreService.fetchProducts] ${product.name}: Image=$imageStatus');
+          if (product.imageUrl.isNotEmpty) {
+            print('  Image URL: ${product.imageUrl}');
+          }
         }
+      }
+      
+      return products;
+    } catch (e, stack) {
+      if (kDebugMode) {
+        print('[SupabaseStoreService.fetchProducts] ERROR: '
+            '\u001b[31m$e\n$stack\u001b[0m');
+      }
       rethrow;
     }
   }

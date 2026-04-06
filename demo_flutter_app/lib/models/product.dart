@@ -69,6 +69,7 @@ class Product {
       isOnSale ? ((1 - price / originalPrice) * 100).round() : 0;
 
   factory Product.fromMap(Map<String, dynamic> map) {
+    final imageUrl = _normalizeImageUrl(map['image_url']?.toString() ?? '');
     return Product(
       id: map['id'].toString(),
       name: map['name']?.toString() ?? '',
@@ -78,7 +79,7 @@ class Product {
       originalPrice: _readDouble(map['original_price'] ?? map['originalPrice']),
       rating: _readDouble(map['rating']),
       reviews: _readInt(map['reviews_count'] ?? map['reviews']),
-      imageUrl: map['image_url']?.toString() ?? '',
+      imageUrl: imageUrl,
       badge: map['badge']?.toString(),
       size: map['size']?.toString(),
       details: _readStringList(map['details']),
@@ -123,4 +124,13 @@ List<String> _readStringList(dynamic value) {
     return value.map((item) => item.toString()).toList();
   }
   return const [];
+}
+
+String _normalizeImageUrl(String url) {
+  final trimmed = url.trim();
+  if (trimmed.isEmpty) return '';
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  return '';
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:provider/provider.dart';
@@ -43,24 +44,68 @@ class ProductCard extends StatelessWidget {
                 children: [
                   AspectRatio(
                     aspectRatio: 1,
-                    child: CachedNetworkImage(
-                      imageUrl: product.imageUrl,
-                      fit: BoxFit.cover,
-                      placeholder: (_, _) => Container(
-                        color: AppColors.muted,
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.crimson,
-                            strokeWidth: 2,
+                    child: product.imageUrl.isEmpty
+                        ? Container(
+                            color: AppColors.muted,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.image_not_supported_outlined,
+                                    size: 40, color: AppColors.mutedForeground),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'No Image',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.mutedForeground,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : CachedNetworkImage(
+                            imageUrl: product.imageUrl,
+                            fit: BoxFit.cover,
+                            placeholder: (_, __) => Container(
+                              color: AppColors.muted,
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  color: AppColors.crimson,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ),
+                            errorWidget: (context, error, stackTrace) {
+                              if (kDebugMode) {
+                                print(
+                                    'Image load error for ${product.name}: $error');
+                              }
+                              return Container(
+                                color: AppColors.muted,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.broken_image_outlined,
+                                        size: 40,
+                                        color: AppColors.mutedForeground),
+                                    const SizedBox(height: 8),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8),
+                                      child: Text(
+                                        'Failed to load',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: AppColors.mutedForeground,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
                           ),
-                        ),
-                      ),
-                      errorWidget: (_, _, _) => Container(
-                        color: AppColors.muted,
-                        child: const Icon(Icons.spa_outlined,
-                            size: 40, color: AppColors.mutedForeground),
-                      ),
-                    ),
                   ),
                   if (product.badge != null)
                     Positioned(
